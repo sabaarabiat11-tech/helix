@@ -65,7 +65,11 @@
   --color-border: #232c4d;
   --color-text: #eef1fb;
   --color-text-dim: #9aa4c7;
-  --color-text-faint: #5c6690;
+  /* 4.63:1 on --color-bg. The previous #5c6690 measured 3.57:1 and failed
+     WCAG AA for normal text — `faint` carries hints, captions and metadata,
+     which are exactly the labels a low-vision reader most needs. Lightened
+     along its own hue rather than toward grey, so the blue cast survives. */
+  --color-text-faint: #70789d;
 
   --color-accent: #00d4ff;
   --color-accent-strong: #5ce6ff;
@@ -92,7 +96,10 @@
   --color-border: #dbe1f2;
   --color-text: #0b1020;
   --color-text-dim: #4b5578;
-  --color-text-faint: #8891b5;
+  /* 4.68:1 on the light --color-bg, matching the dark theme's 4.63:1. The
+     previous #8891b5 measured 2.90:1 — worse than dark mode's, which is the
+     usual way a light theme ends up feeling like the neglected one. */
+  --color-text-faint: #676e8a;
 
   --color-accent: #0091b8;
   --color-accent-strong: #007494;

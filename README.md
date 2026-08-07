@@ -44,21 +44,96 @@ python backend/workers/digest_worker.py --frequency weekly --dry-run
 Run it from cron, systemd, Windows Task Scheduler or a Kubernetes CronJob.
 Suggested: daily at 08:00, weekly on Monday at 08:00.
 
-## Deploying
+## Production deployment
 
-Everything deployment-specific is an environment variable — see
-[.env.example](.env.example). At minimum, production needs `ENVIRONMENT=production`,
-a generated `SECRET_KEY`, and `PUBLIC_URL`/`API_URL` set to your real domain
-(email links and OAuth redirects are built from them).
-
-```bash
-docker build -t helix .
-docker run -p 8000:8000 --env-file .env -v ./data:/app/data helix
+```
+Browser ──► Vercel (static SPA, global CDN)
+              │  VITE_API_URL
+              ▼
+           Railway (FastAPI + PostgreSQL)
+              │
+              └──► SearXNG (VPS — see DEPLOYMENT.md §4)
 ```
 
-The image builds the SPA and serves it from the same origin as the API, so a
-deployment is one container with no CORS configuration. SQLite is the default;
-point `DATABASE_URL` at PostgreSQL to switch, with no code changes.
+Live: **[helix-ai-app.vercel.app](https://helix-ai-app.vercel.app)** →
+`https://helix-production-c193.up.railway.app`
+
+Full walkthrough in **[DEPLOYMENT.md](DEPLOYMENT.md)**; Railway-specific
+settings and failure modes in **[RAILWAY.md](RAILWAY.md)**.
+
+### Frontend — Vercel
+
+Import the repo, set **Root Directory** to `frontend`, and deploy.
+`frontend/vercel.json` supplies the framework preset, SPA rewrites, cache
+headers and CSP; `frontend/.env.production` already points at the Railway API,
+so a one-click import works without setting anything in the dashboard.
+
+To target a different backend, set `VITE_API_URL` in Vercel's project settings.
+It is read at **build** time, so changing it needs a redeploy, not a restart.
+
+### Backend — Railway
+
+Railway reads `railway.json` and builds the root `Dockerfile`. Do **not** set a
+Custom Start Command — one overrides the image's `CMD` and is run without a
+shell, which is what produced `Invalid value for '--port': '$PORT'`. The port
+is resolved in Python by `backend/serve.py` precisely so no shell is involved.
+
+Railway is auto-detected: `RAILWAY_PUBLIC_DOMAIN` implies `ENVIRONMENT=production`
+and supplies `API_URL`, so the cross-site cookie policy resolves itself.
+
+### Environment variables
+
+**Railway (backend)**
+
+| Variable | Required | Notes |
+| -------- | -------- | ----- |
+| `SECRET_KEY` | yes | 32+ bytes. Missing or short = refuses to boot in production |
+| `PUBLIC_URL` | yes | The Vercel URL. Drives CORS and every email link |
+| `DATABASE_URL` | strongly | `postgresql+psycopg://…`. Without it, SQLite in the container — wiped on every redeploy |
+| `EMAIL_PROVIDER` | for email | `resend` \| `smtp` \| `sendgrid` \| `mailgun` \| `ses` \| `console` |
+| `RESEND_API_KEY` | with resend | |
+| `ENVIRONMENT` | auto | Derived from Railway; set only to override |
+| `API_URL` | auto | Derived from `RAILWAY_PUBLIC_DOMAIN` |
+| `PORT` | never | Railway injects it |
+
+**Vercel (frontend)**
+
+| Variable | Notes |
+| -------- | ----- |
+| `VITE_API_URL` | Absolute API origin. Defaults to the committed `.env.production` |
+
+Everything the backend reads is listed in [.env.example](.env.example) and
+resolved in one place, `backend/config.py`.
+
+### Self-hosted alternative
+
+The root `Dockerfile` is backend-only. To serve the SPA from the same origin
+instead — one container, no CORS — build the frontend and let FastAPI mount it:
+
+```bash
+cd frontend && npm run build && cd ..
+docker build -t helix . && docker run -p 8000:8000 --env-file .env helix
+```
+
+`backend/main.py` serves `frontend/dist` automatically when that directory
+exists.
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+| ------- | ------------- |
+| `Invalid value for '--port': '$PORT'` | A Custom Start Command is set in Railway's dashboard. Clear it |
+| Sign-in works, next request 401s | Cross-site cookie blocked. `PUBLIC_URL` and `API_URL` must be the real, different hosts so the policy resolves to `SameSite=None; Secure`. Check the startup log line |
+| CORS error in the browser console | `PUBLIC_URL` doesn't match the frontend origin. For Vercel previews, set `CORS_ORIGIN_REGEX` |
+| Accounts vanish after a deploy | `DATABASE_URL` unset, so it's SQLite on an ephemeral disk. Point it at PostgreSQL |
+| Verification / reset emails never arrive | `EMAIL_PROVIDER=console` writes them to `data/outbox/` inside the container. Set a real provider |
+| `SECRET_KEY must be set` at boot | Expected in production. Generate: `python -c "import secrets; print(secrets.token_urlsafe(48))"` |
+| Dashboard is empty | The discovery corpus ships empty — `data/linkedin_master.csv` is gitignored because it holds real people's details. Run the pipeline, or restore your CSV |
+| Health check fails on Railway | `/api/ready` returns 503 when the database is unreachable. The deploy log names the reason |
+
+The backend logs a configuration audit at startup — SQLite in production, a
+localhost `PUBLIC_URL`, console mail — so most of the above is visible in the
+deploy log before anyone reports it.
 
 ---
 
