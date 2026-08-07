@@ -442,6 +442,7 @@ function Hero() {
 
 export default function Landing() {
   const [openFaq, setOpenFaq] = useState(0);
+  const faqAnimate = useEntrance();
 
   return (
     <div className="min-h-screen bg-bg text-ink antialiased">
@@ -666,7 +667,11 @@ export default function Landing() {
                   </button>
                   {isOpen && (
                     <motion.p
-                      initial={{ opacity: 0, height: 0 }}
+                      // The first entry is open on mount, so this is a mount
+                      // animation as well as an interaction one — and would
+                      // otherwise stay collapsed at opacity 0 when frames
+                      // aren't being produced, exactly like the rest of the app.
+                      initial={faqAnimate ? { opacity: 0, height: 0 } : false}
                       animate={{ opacity: 1, height: "auto" }}
                       transition={{ duration: 0.22 }}
                       className="overflow-hidden text-[13.5px] text-dim leading-relaxed pb-5 pr-8"
