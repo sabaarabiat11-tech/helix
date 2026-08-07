@@ -153,10 +153,27 @@
   box-sizing: border-box;
 }
 
+/*
+  `min-height`, not `height`.
+
+  With `height: 100%` these three boxes are locked to exactly the viewport,
+  while the content inside them is not. Measured on the dashboard at a 720px
+  viewport: `#root` was 720px tall containing 1375px of content — 655px of
+  every page sat outside its own root box. The root layer's bounds therefore
+  didn't cover the content, which is the wrong starting point for both painting
+  and for `position: sticky` inside it.
+
+  The login screen was immune because `AuthLayout` fits in a single viewport
+  and so never overflowed.
+
+  `min-height: 100%` keeps the "fill the screen even when nearly empty"
+  behaviour these rules were added for, while letting the boxes grow to
+  their real content height.
+*/
 html,
 body,
 #root {
-  height: 100%;
+  min-height: 100%;
 }
 
 body {
