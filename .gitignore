@@ -1,0 +1,39 @@
+.env
+__pycache__/
+*.pyc
+data/logs/
+data/reports/
+data/linkedin_master.csv
+
+# Console email provider output (dev)
+data/outbox/
+data/exports/
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/app.db.pre-v3-backup
+
+# Compiled frontend and dependencies
+frontend/node_modules/
+frontend/dist/
+
+# Datasets containing real individuals' details — never published.
+# The pipeline regenerates data/linkedin_master.csv locally.
+final_ai_biology_linkedin_network.csv
+*.csv
+!data/.gitkeep
+
+# Tooling
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.venv/
+venv/
+
+# Local editor/agent configuration
+.claude/
+
+# SearXNG holds its own session secret — copy the example and generate one:
+#   cp searxng/settings.yml.example searxng/settings.yml
+#   openssl rand -hex 32     (paste into secret_key)
+searxng/settings.yml

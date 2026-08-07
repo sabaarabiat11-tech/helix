@@ -1,0 +1,92 @@
+# Helix — local infrastructure.
+#
+# By default this starts only SearXNG, which the discovery pipeline needs and
+# which you want running whether or not the app is containerized:
+#
+#   docker compose up -d                     # SearXNG only (the usual case)
+#   docker compose ps                        # check health
+#   docker compose logs -f                   # follow logs
+#   docker compose down                      # stop
+#
+# The `app` and `postgres` services are behind profiles, so they stay out of
+# the way during normal development and are opt-in when you want to rehearse a
+# production deployment:
+#
+#   docker compose --profile app up -d --build          # app + SearXNG
+#   docker compose --profile app --profile postgres up -d --build
+#
+# Exposes: SearXNG on http://localhost:8080, Helix on http://localhost:8000
+
+services:
+  searxng:
+    image: docker.io/searxng/searxng:latest
+    container_name: ai-bio-searxng
+    ports:
+      # Bound to loopback only — this is a local dev tool, not a public service.
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    environment:
+      - SEARXNG_BASE_URL=http://localhost:8080/
+      - UWSGI_WORKERS=2
+      - UWSGI_THREADS=4
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:8080/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    restart: unless-stopped
+
+  app:
+    profiles: ["app"]
+    build: .
+    container_name: helix-app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # Inside the compose network SearXNG is reachable by service name, not
+      # localhost — localhost in a container is the container itself.
+      - SEARXNG_BASE_URL=http://searxng:8080
+      - PUBLIC_URL=${PUBLIC_URL:-http://localhost:8000}
+      - API_URL=${API_URL:-http://localhost:8000}
+    volumes:
+      # SQLite database, logs, reports, exports and the console mailer outbox.
+      # Drop this once DATABASE_URL points at Postgres and you don't need the
+      # pipeline's local artifacts.
+      - ./data:/app/data
+    depends_on:
+      searxng:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    profiles: ["postgres"]
+    image: postgres:16-alpine
+    container_name: helix-postgres
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-helix}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-helix}
+      - POSTGRES_DB=${POSTGRES_DB:-helix}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - helix-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-helix}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  helix-pgdata:

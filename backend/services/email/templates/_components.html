@@ -1,0 +1,139 @@
+{# Reusable email building blocks. Kept as macros so every template produces
+   visually identical buttons, headings and person cards. #}
+
+{% macro heading(text) -%}
+<h1 class="helix-h1" style="margin:0 0 14px 0; font-family:'Segoe UI',Helvetica,Arial,sans-serif; font-size:27px; line-height:35px; font-weight:700; color:#eef1fb; letter-spacing:-0.02em;">{{ text }}</h1>
+{%- endmacro %}
+
+{% macro paragraph(text) -%}
+<p style="margin:0 0 16px 0; font-size:14.5px; line-height:23px; color:#9aa4c7;">{{ text }}</p>
+{%- endmacro %}
+
+{% macro eyebrow(text) -%}
+<div style="margin:0 0 12px 0; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#00D4FF;">{{ text }}</div>
+{%- endmacro %}
+
+{#
+  A "bulletproof" button: Outlook ignores padding on <a>, so it gets a VML
+  rounded rectangle inside an MSO conditional comment, while every other client
+  renders the ordinary anchor below it.
+#}
+{% macro button(label, url) -%}
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 22px 0;">
+  <tr>
+    <td align="center" style="border-radius:10px; background-color:#00D4FF;">
+      <!--[if mso]>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
+                   href="{{ url }}" style="height:46px;v-text-anchor:middle;width:250px;" arcsize="22%" stroke="f" fillcolor="#00D4FF">
+        <w:anchorlock/>
+        <center style="color:#04121f;font-family:'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;">{{ label }}</center>
+      </v:roundrect>
+      <![endif]-->
+      <!--[if !mso]><!-- -->
+      <a href="{{ url }}" style="display:inline-block; padding:14px 30px; font-family:'Segoe UI',Helvetica,Arial,sans-serif; font-size:15px; font-weight:700; color:#04121f; border-radius:10px; background-color:#00D4FF;">{{ label }}</a>
+      <!--<![endif]-->
+    </td>
+  </tr>
+</table>
+{%- endmacro %}
+
+{% macro fallback_link(url) -%}
+<p style="margin:0 0 4px 0; font-size:12.5px; line-height:20px; color:#5c6690;">
+  If the button doesn't work, copy and paste this link into your browser:
+</p>
+<p style="margin:0 0 6px 0; font-size:12.5px; line-height:20px; word-break:break-all;">
+  <a href="{{ url }}" style="color:#38BDF8;">{{ url }}</a>
+</p>
+{%- endmacro %}
+
+{% macro divider() -%}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:26px 0;">
+  <tr><td height="1" style="background-color:#232c4d; font-size:0; line-height:0;">&nbsp;</td></tr>
+</table>
+{%- endmacro %}
+
+{% macro section_title(text, count=none) -%}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 14px 0;">
+  <tr>
+    <td style="font-family:'Segoe UI',Helvetica,Arial,sans-serif; font-size:15.5px; font-weight:700; color:#eef1fb;">{{ text }}</td>
+    {% if count is not none %}
+    <td align="right" style="font-family:'Segoe UI',Helvetica,Arial,sans-serif; font-size:12px; color:#5c6690;">{{ count }}</td>
+    {% endif %}
+  </tr>
+</table>
+{%- endmacro %}
+
+{#
+  One recommended researcher. `person` needs: name, title, company,
+  linkedin_url, score, and why (a list of reason strings).
+#}
+{% macro person_card(person) -%}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 10px 0; background-color:#10162c; border:1px solid #232c4d; border-radius:12px;">
+  <tr>
+    <td style="padding:15px 17px; font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="helix-stack" style="vertical-align:top;">
+            <div style="font-size:14.5px; font-weight:600; color:#eef1fb; line-height:20px;">{{ person.name }}</div>
+            <div style="font-size:12.5px; color:#9aa4c7; line-height:19px; padding-top:2px;">
+              {{ person.title or 'Researcher' }}{% if person.company %} &middot; {{ person.company }}{% endif %}
+            </div>
+          </td>
+          <td class="helix-stack helix-stack-right" width="70" align="right" style="vertical-align:top;">
+            <div style="display:inline-block; padding:4px 10px; border-radius:20px; background-color:#0d2a3d; border:1px solid #14506b;">
+              <span style="font-size:12px; font-weight:700; color:#00D4FF;">{{ person.score }}</span><span style="font-size:10px; color:#5c8fa8;">/100</span>
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      {% if person.why %}
+      <div style="padding-top:10px;">
+        {% for reason in person.why[:2] %}
+        <div style="font-size:11.5px; line-height:18px; color:#7c88ad; padding-top:2px;">
+          <span style="color:#4ADE80;">&#8226;</span> {{ reason }}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if person.linkedin_url %}
+      <div style="padding-top:11px;">
+        <a href="{{ person.linkedin_url }}" style="font-size:12.5px; font-weight:600; color:#38BDF8;">View LinkedIn profile &rarr;</a>
+      </div>
+      {% endif %}
+    </td>
+  </tr>
+</table>
+{%- endmacro %}
+
+{# A compact metric tile. Used in a row of two or four in the digest header. #}
+{% macro stat(label, value) -%}
+<td class="helix-stat" width="25%" style="padding:0 5px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#10162c; border:1px solid #232c4d; border-radius:10px;">
+    <tr>
+      <td align="center" style="padding:14px 6px; font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
+        <div style="font-size:21px; font-weight:700; color:#00D4FF; line-height:26px;">{{ value }}</div>
+        <div style="font-size:10.5px; color:#7c88ad; text-transform:uppercase; letter-spacing:0.07em; padding-top:3px;">{{ label }}</div>
+      </td>
+    </tr>
+  </table>
+</td>
+{%- endmacro %}
+
+{% macro company_row(name, count, url) -%}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 7px 0;">
+  <tr>
+    <td style="padding:10px 14px; background-color:#10162c; border:1px solid #232c4d; border-radius:9px; font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="font-size:13.5px; color:#eef1fb; font-weight:500;">
+            <a href="{{ url }}" style="color:#eef1fb;">{{ name }}</a>
+          </td>
+          <td align="right" style="font-size:12px; color:#4ADE80; font-weight:600; white-space:nowrap;">{{ count }}</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+{%- endmacro %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% import "_components.html" as ui %}
+
+{% block preheader %}Your Helix account is ready. Here's how to get the most from it.{% endblock %}
+
+{% block content %}
+  {{ ui.eyebrow("Account ready") }}
+  {{ ui.heading("You're in, " ~ user.name ~ ".") }}
+  {{ ui.paragraph("Helix tracks the people building at the intersection of AI and biology — across research labs, biotech companies and open-source projects — and ranks them for you.") }}
+
+  {{ ui.button("Open my dashboard", dashboard_url) }}
+
+  {{ ui.divider() }}
+
+  {{ ui.section_title("Three things worth doing first") }}
+
+  {% for step in steps %}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 9px 0;">
+    <tr>
+      <td width="30" style="vertical-align:top; padding-top:13px;">
+        <div style="width:22px; height:22px; border-radius:7px; background-color:#0d2a3d; border:1px solid #14506b; text-align:center; line-height:22px; font-family:'Segoe UI',Helvetica,Arial,sans-serif; font-size:11px; font-weight:700; color:#00D4FF;">{{ loop.index }}</div>
+      </td>
+      <td style="padding:11px 0 11px 4px; font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
+        <div style="font-size:13.5px; font-weight:600; color:#eef1fb;">{{ step.title }}</div>
+        <div style="font-size:12.5px; line-height:20px; color:#9aa4c7; padding-top:2px;">{{ step.body }}</div>
+      </td>
+    </tr>
+  </table>
+  {% endfor %}
+
+  {{ ui.divider() }}
+
+  <p style="margin:0; font-size:12.5px; line-height:20px; color:#5c6690;">
+    You're set to receive the <strong style="color:#7c88ad;">{{ digest_frequency }}</strong> digest.
+    <a href="{{ preferences_url }}" style="color:#38BDF8;">Change that any time</a>.
+  </p>
+{% endblock %}

@@ -1,0 +1,40 @@
+[tool.ruff]
+target-version = "py312"
+line-length = 110
+exclude = [".venv", "venv", "__pycache__", "data", "searxng", "frontend"]
+
+[tool.ruff.lint]
+# Chosen to catch real defects rather than enforce a house style. Pyflakes (F)
+# and bugbear (B) find genuine bugs — undefined names, unused imports, mutable
+# default arguments, except-without-raise-from. The rest of ruff's default set
+# is largely cosmetic (re.I vs re.IGNORECASE and similar) and rewriting working
+# code to satisfy it would be churn, not improvement.
+select = ["E", "F", "I", "B", "UP", "C4"]
+ignore = [
+    # Long lines are a deliberate choice in the SQL strings and regex patterns,
+    # where wrapping hurts readability more than the length does.
+    "E501",
+    # `except Exception` is intentional at the boundaries that must never take
+    # the process down: email sending, template rendering, insight generation.
+    "BLE001",
+    # Function calls in argument defaults — FastAPI's Depends()/Query() idiom.
+    "B008",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests import fixtures lazily inside test bodies so the app is configured
+# before import, which reads as a "module import not at top of file".
+"backend/tests/*" = ["E402"]
+# The worker manipulates sys.path before importing app modules, by design.
+"backend/workers/*" = ["E402"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["config", "core", "db", "database", "routers", "services", "run_state", "src"]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+pythonpath = ["backend"]
+filterwarnings = [
+    # Starlette's TestClient surfaces these from dependencies we don't control.
+    "ignore::DeprecationWarning",
+]

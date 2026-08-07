@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% import "_components.html" as ui %}
+
+{% block preheader %}Confirm your email address to activate your Helix account.{% endblock %}
+
+{% block content %}
+  {{ ui.eyebrow("Confirm your email") }}
+  {{ ui.heading("Welcome to Helix, " ~ user.name ~ ".") }}
+  {{ ui.paragraph("Helix continuously scans research labs, biotech companies and professional networks to surface the people driving AI × Biology forward. Confirm your address and your dashboard is ready.") }}
+
+  {{ ui.button("Verify my email", verify_url) }}
+  {{ ui.fallback_link(verify_url) }}
+
+  {{ ui.divider() }}
+
+  <p style="margin:0; font-size:12.5px; line-height:20px; color:#5c6690;">
+    This link expires in {{ expires_hours }} hours. If you didn't create a Helix account, you can safely ignore this email.
+  </p>
+{% endblock %}
+
+{% block footer %}
+<p style="margin:0;">You received this because someone signed up for Helix with this address.</p>
+{% endblock %}

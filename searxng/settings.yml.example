@@ -1,0 +1,48 @@
+# =============================================================================
+# SearXNG settings for the local, self-hosted instance used by the
+# AI x Biology LinkedIn Discovery Agent.
+#
+# This is a LOCAL DEVELOPMENT configuration: it is reachable only from this
+# machine (port bound to 127.0.0.1 in docker-compose.yml), the rate limiter is
+# disabled so the JSON API works without extra setup, and there is no public
+# exposure. Do NOT deploy this settings.yml as-is to a publicly reachable
+# server — see https://docs.searxng.org/admin/searx.limiter.html first.
+# =============================================================================
+
+use_default_settings: true
+
+general:
+  instance_name: "ai-bio-agent-local-searxng"
+  privacypolicy_url: false
+  donation_url: false
+  contact_url: false
+  enable_metrics: false
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  default_lang: "en"
+  # "json" must be listed here or the API rejects format=json requests.
+  formats:
+    - html
+    - json
+
+server:
+  # Replaced with a real generated value below (not the image's default
+  # placeholder) — SearXNG logs a warning and some features misbehave if the
+  # default secret_key is left in place.
+  secret_key: "CHANGE_ME_RUN_openssl_rand_hex_32"
+  # Disabled: the limiter's bot-detection is what blocks scripted
+  # format=json requests on public instances. This instance is local-only
+  # and single-user, so there is no abuse surface to defend against.
+  limiter: false
+  image_proxy: false
+  # Must match how the pipeline reaches this instance.
+  base_url: "http://localhost:8080/"
+
+ui:
+  static_use_hash: true
+
+# Keep the engine set close to defaults (use_default_settings above already
+# gives us the full default engine list); nothing disabled here so results
+# are representative of what a real SearXNG deployment returns.

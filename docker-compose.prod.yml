@@ -1,0 +1,52 @@
+# SearXNG for a production deployment — intended for a small VPS, not Railway.
+#
+# See DEPLOYMENT.md §4 for the reasoning. In short: SearXNG serves the
+# discovery pipeline, not user requests. It is idle most of the time, holds no
+# state worth persisting, and continuously makes outbound calls to search
+# engines that rate-limit by IP. A dedicated cheap VPS with its own stable IP
+# is both cheaper than an always-on platform service and less likely to get
+# throttled.
+#
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Then set SEARXNG_BASE_URL on the API to http://<vps-ip>:8080.
+
+services:
+  searxng:
+    image: docker.io/searxng/searxng:latest
+    container_name: helix-searxng
+    ports:
+      # Bound to all interfaces so the Railway-hosted API can reach it — which
+      # means the firewall is doing the access control. Restrict this port to
+      # your API's egress addresses, or put it behind a reverse proxy with
+      # auth. It must not be left open to the internet as a free public
+      # instance.
+      - "8080:8080"
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    environment:
+      - SEARXNG_BASE_URL=${SEARXNG_PUBLIC_URL:-http://localhost:8080}/
+      # Sized for a single scheduled pipeline run, not concurrent user traffic.
+      - UWSGI_WORKERS=4
+      - UWSGI_THREADS=4
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
+    logging:
+      # Without this a long-running container's logs grow until they fill the
+      # VPS disk, which takes down the pipeline in a way that looks unrelated.
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:8080/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: always

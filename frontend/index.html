@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#050816" />
+
+    <title>Helix — AI × Biology Discovery</title>
+    <meta
+      name="description"
+      content="Helix continuously scans research labs, biotech companies and professional networks to surface the people driving AI × Biology forward — ranked for you, with every score explained."
+    />
+
+    <!--
+      The app itself is behind authentication, so there is nothing for a
+      crawler to index past the sign-in screen. `noindex` on the app domain
+      keeps private dashboard routes out of search results; the Open Graph
+      tags still give a proper card when someone shares the link.
+    -->
+    <meta name="robots" content="noindex, nofollow" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Helix" />
+    <meta property="og:title" content="Helix — AI × Biology Discovery" />
+    <meta
+      property="og:description"
+      content="Find the people building at the intersection of AI and biology, before everyone else does."
+    />
+    <meta property="og:image" content="/favicon.svg" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Helix — AI × Biology Discovery" />
+    <meta
+      name="twitter:description"
+      content="Find the people building at the intersection of AI and biology, before everyone else does."
+    />
+    <!--
+      Single source of truth for theme, applied synchronously before first
+      paint so there is never a flash of the wrong theme and never a
+      device/browser-dependent inconsistency (dark is the product default;
+      the only thing that can override it is the user's own saved choice).
+      Keep the storage key and default in sync with src/lib/theme.js.
+
+      ⚠ EDITING THIS SCRIPT BREAKS THE PRODUCTION CSP.
+      vercel.json allows this exact script by SHA-256 hash rather than with
+      'unsafe-inline'. Change a single character here and the browser will
+      refuse to run it — the app still works, but every visitor gets the
+      default theme with a flash. After editing, recompute and update the hash
+      in frontend/vercel.json:
+
+        npm run build
+        python -c "import base64,hashlib,re; h=open('dist/index.html',encoding='utf-8').read(); \
+          s=re.findall(r'<script(?![^>]*\ssrc=)[^>]*>(.*?)</script>', h, re.S)[0]; \
+          print('sha256-'+base64.b64encode(hashlib.sha256(s.encode()).digest()).decode())"
+    -->
+    <script>
+      (function () {
+        var THEME_KEY = "helix-theme";
+        try {
+          var stored = localStorage.getItem(THEME_KEY);
+          var theme = stored === "light" || stored === "dark" ? stored : "dark";
+        } catch (e) {
+          var theme = "dark";
+        }
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

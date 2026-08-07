@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% import "_components.html" as ui %}
+
+{% block preheader %}{{ digest.headline }}{% endblock %}
+
+{% block content %}
+  {# Literal middot, not the HTML entity — macro output is autoescaped. #}
+  {{ ui.eyebrow(digest.period_label ~ " digest · " ~ digest.date_label) }}
+  {{ ui.heading(digest.headline) }}
+  {{ ui.paragraph(digest.summary) }}
+
+  <!-- Metrics -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 6px 0;">
+    <tr>
+      {{ ui.stat("New", digest.stats.new_people) }}
+      {{ ui.stat("Companies", digest.stats.new_companies) }}
+      {{ ui.stat("Top score", digest.stats.top_score) }}
+      {{ ui.stat("Total", digest.stats.total_people) }}
+    </tr>
+  </table>
+
+  {{ ui.divider() }}
+
+  <!-- Recommended people -->
+  {% if digest.recommendations %}
+    {{ ui.section_title("Recommended for you", digest.recommendations | length ~ " profiles") }}
+    <p style="margin:0 0 14px 0; font-size:12.5px; line-height:20px; color:#7c88ad;">
+      Ranked for your interests. Each score explains itself.
+    </p>
+    {% for person in digest.recommendations %}
+      {{ ui.person_card(person) }}
+    {% endfor %}
+
+    {{ ui.button("Open my dashboard", digest.dashboard_url) }}
+  {% else %}
+    {{ ui.section_title("Recommended for you") }}
+    <p style="margin:0 0 18px 0; font-size:13.5px; line-height:21px; color:#7c88ad;">
+      Nothing new cleared your score threshold this {{ digest.period_noun }}. The pipeline keeps scanning — you'll hear from us when it finds someone worth your time.
+    </p>
+  {% endif %}
+
+  <!-- Trending companies -->
+  {% if digest.trending_companies %}
+    {{ ui.divider() }}
+    {{ ui.section_title("Trending companies") }}
+    <p style="margin:0 0 13px 0; font-size:12.5px; line-height:20px; color:#7c88ad;">
+      Organizations hiring or publishing most actively this {{ digest.period_noun }}.
+    </p>
+    {% for company in digest.trending_companies %}
+      {{ ui.company_row(company.name, "+" ~ company.count ~ " new", company.url) }}
+    {% endfor %}
+  {% endif %}
+
+  <!-- New companies -->
+  {% if digest.new_companies %}
+    {{ ui.divider() }}
+    {{ ui.section_title("First seen this " ~ digest.period_noun) }}
+    <p style="margin:0 0 13px 0; font-size:12.5px; line-height:20px; color:#7c88ad;">
+      Organizations that entered the network for the first time.
+    </p>
+    <p style="margin:0; font-size:13.5px; line-height:23px; color:#eef1fb;">
+      {% for company in digest.new_companies %}<span style="display:inline-block; padding:4px 11px; margin:0 5px 6px 0; background-color:#131c37; border:1px solid #2a3a63; border-radius:20px; font-size:12.5px; color:#c3cbe6;">{{ company }}</span>{% endfor %}
+    </p>
+  {% endif %}
+
+  <!-- Insights -->
+  {% if digest.insights %}
+    {{ ui.divider() }}
+    {{ ui.section_title("AI insights") }}
+    {% for insight in digest.insights %}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 9px 0;">
+      <tr>
+        <td style="padding:13px 15px; background-color:#10162c; border-left:3px solid #7C3AED; border-radius:0 9px 9px 0; font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
+          <div style="font-size:13px; font-weight:600; color:#eef1fb;">{{ insight.category }}</div>
+          <div style="font-size:12.5px; line-height:20px; color:#9aa4c7; padding-top:3px;">{{ insight.description }}</div>
+        </td>
+      </tr>
+    </table>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Watchlist reminders -->
+  {% if digest.reminders %}
+    {{ ui.divider() }}
+    {{ ui.section_title("Watchlist reminders due") }}
+    {% for reminder in digest.reminders %}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 7px 0;">
+      <tr>
+        <td style="padding:11px 15px; background-color:#241a10; border:1px solid #5c4423; border-radius:9px; font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
+          <div style="font-size:13px; color:#f0d9b5;">
+            <strong>{{ reminder.name }}</strong>{% if reminder.company %} &middot; {{ reminder.company }}{% endif %}
+          </div>
+          <div style="font-size:11.5px; color:#bfa06e; padding-top:2px;">Reminder set for {{ reminder.reminder_date }}</div>
+        </td>
+      </tr>
+    </table>
+    {% endfor %}
+  {% endif %}
+
+  {{ ui.divider() }}
+
+  <p style="margin:0; font-size:12px; line-height:19px; color:#5c6690;">
+    You're getting the <strong style="color:#7c88ad;">{{ digest.period_label | lower }}</strong> digest.
+    <a href="{{ preferences_url }}" style="color:#38BDF8;">Change frequency or turn it off</a>.
+  </p>
+{% endblock %}

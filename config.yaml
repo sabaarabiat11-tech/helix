@@ -1,0 +1,104 @@
+# =============================================================================
+# AI x Biology LinkedIn Discovery Agent — configuration
+# =============================================================================
+
+run:
+  min_new_per_run: 20
+  max_new_per_run: 30
+  # If a source errors, keep going with the others rather than aborting the run.
+  fail_soft: true
+
+paths:
+  master_csv: data/linkedin_master.csv
+  reports_dir: data/reports
+  logs_dir: data/logs
+
+target_companies:
+  - Isomorphic Labs
+  - FutureHouse
+  - Insilico Medicine
+  - Owkin
+  - Recursion
+  - Generate Biomedicines
+  - Deep Genomics
+  - Relation Therapeutics
+  - Arc Institute
+  - Valo Health
+  - Profluent
+  - DeepMind
+  - Google Research
+
+target_roles:
+  - Machine Learning Engineer
+  - AI Scientist
+  - Computational Biologist
+  - Bioinformatics Engineer
+  - Software Engineer
+  - Research Engineer
+  - Applied Scientist
+
+# Titles that disqualify a candidate even if everything else matches —
+# proxy for "exec/celebrity, unlikely to be a peer-to-peer connection target".
+exclude_title_keywords:
+  - ceo
+  - "chief executive"
+  - cto
+  - "chief technology officer"
+  - cso
+  - "chief scientific officer"
+  - chairman
+  - president
+  - founder
+  - co-founder
+  - "executive director"
+  - "vice president"
+  - svp
+
+sources:
+  searxng_search:
+    enabled: true
+    # Local, self-hosted SearXNG (see docker-compose.yml) — no public
+    # instances are used anywhere in this project. No API key needed: this
+    # is our own container. Start it with `docker compose up -d` or
+    # `python start.py` (which also waits for it to become healthy before
+    # running the pipeline).
+    base_url: http://localhost:8080
+    results_per_query: 8
+    max_queries_per_run: 40
+    request_delay_seconds: 0.5    # our own local instance — no need to be polite/throttled
+    timeout_seconds: 10
+    max_retries: 3                # covers the container still warming up, not instance fallback (there's only one)
+    retry_backoff_seconds: 1.0
+
+  github:
+    enabled: true
+    # Optional GITHUB_TOKEN in .env raises the rate limit from 10/min to 30/min (search API)
+    max_results_per_query: 15
+    request_delay_seconds: 2.0
+
+  google_scholar:
+    enabled: false   # off by default: no official API, scraping is fragile/rate-limited
+    max_profiles_per_run: 10
+    request_delay_seconds: 3.0
+
+  company_pages:
+    enabled: true
+    request_delay_seconds: 1.5
+    # Best-effort generic scraper. Add a CSS selector per company for reliable
+    # extraction; without one, a generic heuristic is used (lower precision).
+    pages:
+      - company: Isomorphic Labs
+        url: https://www.isomorphiclabs.com
+        selector: null
+      - company: FutureHouse
+        url: https://www.futurehouse.org/team
+        selector: null
+      - company: Arc Institute
+        url: https://arcinstitute.org/team
+        selector: null
+      - company: Recursion
+        url: https://www.recursion.com/team
+        selector: null
+      - company: Owkin
+        url: https://www.owkin.com/about-us
+        selector: null
