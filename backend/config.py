@@ -146,6 +146,14 @@ class Settings:
     require_email_verification: bool = False
     signup_enabled: bool = True
 
+    # --- Scheduler ----------------------------------------------------------
+    # Runs the digest sends from inside the API process. On by default so
+    # recommendation emails work without anyone configuring a cron job; turn
+    # off once a real scheduled job runs workers/digest_worker.py.
+    enable_scheduler: bool = True
+    scheduler_hour: int = 8          # UTC hour for the daily send
+    scheduler_weekday: int = 0       # 0 = Monday, for the weekly send
+
     # --- OAuth --------------------------------------------------------------
     google_client_id: str = ""
     google_client_secret: str = ""
@@ -363,6 +371,9 @@ def get_settings() -> Settings:
         allow_user_triggered_runs=_env_bool("ALLOW_USER_TRIGGERED_RUNS", not is_prod),
         require_email_verification=_env_bool("REQUIRE_EMAIL_VERIFICATION", False),
         signup_enabled=_env_bool("SIGNUP_ENABLED", True),
+        enable_scheduler=_env_bool("ENABLE_SCHEDULER", True),
+        scheduler_hour=max(0, min(23, _env_int("SCHEDULER_HOUR", 8))),
+        scheduler_weekday=max(0, min(6, _env_int("SCHEDULER_WEEKDAY", 0))),
         google_client_id=_env("GOOGLE_CLIENT_ID"),
         google_client_secret=_env("GOOGLE_CLIENT_SECRET"),
         github_client_id=_env("GITHUB_CLIENT_ID"),

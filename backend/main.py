@@ -17,8 +17,9 @@ Run locally with:
 """
 from __future__ import annotations
 
+import asyncio
 import logging
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
 from fastapi import Depends, FastAPI
@@ -31,7 +32,9 @@ from core import deps
 from core.middleware import RateLimitMiddleware, SecurityHeadersMiddleware
 from database import sync_from_csv
 from db import db_conn, engine, init_db, scalar
+from db.transfer import maybe_auto_migrate
 from routers import (
+    admin,
     analytics,
     auth,
     companies,
@@ -49,6 +52,7 @@ from routers import (
     users,
     watchlist,
 )
+from services import scheduler_service
 
 logging.basicConfig(
     level=logging.DEBUG if settings.debug else logging.INFO,
@@ -65,6 +69,15 @@ FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     init_db()
+
+    # Carry a leftover SQLite database into PostgreSQL the first time the app
+    # boots against an empty one, so switching DATABASE_URL preserves accounts
+    # and discovery data instead of silently starting from nothing. No-op on
+    # every later boot — see the guards in db/transfer.py.
+    imported = maybe_auto_migrate(PROJECT_ROOT / "data" / "app.db")
+    if imported:
+        log.info("Imported %s rows from the previous SQLite database", imported["total"])
+
     result = sync_from_csv(force=True)
     log.info(
         "%s %s starting · env=%s · db=%s · %s people · cookies=SameSite:%s Secure:%s",
@@ -87,7 +100,20 @@ async def lifespan(_: FastAPI):
     for problem in audit_configuration():
         log.warning("CONFIG: %s", problem)
 
+    scheduler_task = None
+    if settings.enable_scheduler:
+        scheduler_task = asyncio.create_task(scheduler_service.scheduler_loop())
+    else:
+        log.info("Scheduler disabled — digests must be sent by workers/digest_worker.py")
+
     yield
+
+    if scheduler_task:
+        scheduler_task.cancel()
+        # Give the task a moment to unwind so a send in flight isn't cut off
+        # mid-request to the mail provider.
+        with suppress(asyncio.CancelledError):
+            await scheduler_task
 
     # Graceful shutdown. Railway sends SIGTERM and waits before SIGKILL;
     # returning connections to the pool here means in-flight queries finish and
@@ -137,6 +163,7 @@ app.include_router(auth.router)
 PROTECTED = [Depends(deps.current_user)]
 
 app.include_router(users.router)  # every endpoint declares its own dependency
+app.include_router(admin.router)  # each endpoint requires an administrator
 app.include_router(stats.router, dependencies=PROTECTED)
 app.include_router(discoveries.router, dependencies=PROTECTED)
 app.include_router(companies.router, dependencies=PROTECTED)
