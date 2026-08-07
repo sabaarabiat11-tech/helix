@@ -66,7 +66,7 @@ Railway reads `railway.json`, builds the root `Dockerfile`, and health-checks
 | `ENVIRONMENT`   | `production`                                 |
 | `SECRET_KEY`    | `python -c "import secrets; print(secrets.token_urlsafe(48))"` |
 | `DATABASE_URL`  | the `postgresql+psycopg://…` URL from step 1  |
-| `PUBLIC_URL`    | your Vercel URL, e.g. `https://helix.vercel.app` |
+| `PUBLIC_URL`    | your Vercel URL, e.g. `https://helix-ai-app.vercel.app` |
 | `API_URL`       | your Railway URL, e.g. `https://helix-api.up.railway.app` |
 | `EMAIL_PROVIDER`| `resend`                                     |
 | `RESEND_API_KEY`| from [resend.com/api-keys](https://resend.com/api-keys) |
@@ -177,7 +177,7 @@ python backend/workers/digest_worker.py --frequency weekly --dry-run
 ## Why cookies need care
 
 The refresh token lives in an httpOnly cookie. When the frontend and API are on
-**different hosts** — which `helix.vercel.app` and `helix-api.up.railway.app`
+**different hosts** — which `helix-ai-app.vercel.app` and `helix-api.up.railway.app`
 are — a `SameSite=Lax` cookie is simply not sent, so sign-in appears to succeed
 and then every subsequent request returns 401.
 
@@ -190,7 +190,7 @@ You can confirm what the running instance decided from its startup log:
 
 ```
 Helix 4.0.0 starting · env=production · db=postgresql · … · cookies=SameSite:none Secure:True
-Split deployment detected (https://helix.vercel.app ↔ https://helix-api.up.railway.app)
+Split deployment detected (https://helix-ai-app.vercel.app ↔ https://helix-api.up.railway.app)
 ```
 
 ## Verifying a deployment
