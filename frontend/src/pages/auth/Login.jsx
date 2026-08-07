@@ -25,7 +25,7 @@ export default function Login() {
 
   // Where to land after signing in — either where they were headed before the
   // redirect, or the dashboard.
-  const next = location.state?.from?.pathname || searchParams.get("next") || "/";
+  const next = location.state?.from?.pathname || searchParams.get("next") || "/dashboard";
 
   useEffect(() => {
     api.authConfig().then(setConfig).catch(() => setConfig({ oauth_providers: [], signup_enabled: true }));

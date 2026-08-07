@@ -45,7 +45,8 @@ def _base_context() -> dict:
     return {
         "app_name": settings.app_name,
         "app_url": app_url(),
-        "dashboard_url": app_url("/"),
+        # "/" is the public landing page; signed-in users belong on /dashboard.
+        "dashboard_url": app_url("/dashboard"),
         "preferences_url": app_url("/settings"),
     }
 
@@ -168,7 +169,7 @@ def send_welcome_email(user: dict, digest_frequency: str = "weekly") -> bool:
         digest_frequency=digest_frequency,
         text=(
             f"Welcome to {settings.app_name}, {user['name']}.\n\n"
-            f"Open your dashboard: {app_url('/')}\n\n"
+            f"Open your dashboard: {app_url('/dashboard')}\n\n"
             "Get started by setting your focus areas in Settings, following people "
             "worth tracking, and checking AI Insights."
         ),

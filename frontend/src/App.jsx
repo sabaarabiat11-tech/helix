@@ -6,11 +6,14 @@ import { WatchlistProvider } from "./hooks/WatchlistContext";
 import { NotificationsProvider } from "./hooks/NotificationsContext";
 import { TooltipProvider } from "./components/ui/Tooltip";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import RootRoute from "./components/auth/RootRoute";
 import RouteFallback from "./components/RouteFallback";
 
-// Login is the entry point for every signed-out visitor, so it is bundled
-// eagerly — making the first screen wait on a second network round trip is
-// the one place code splitting costs more than it saves.
+// The landing page and login are the two entry points a signed-out visitor
+// can arrive at directly, so both are bundled eagerly — making the very first
+// screen wait on a second network round trip is the one place code splitting
+// costs more than it saves.
+import Landing from "./pages/Landing";
 import Login from "./pages/auth/Login";
 
 // Everything else is split per route. The heavy dependencies (three.js,
@@ -48,6 +51,9 @@ export default function App() {
         <TooltipProvider>
           <Suspense fallback={<RouteFallback />}>
             <Routes>
+              {/* Public marketing surface at "/", dashboard for signed-in users */}
+              <Route path="/" element={<RootRoute landing={<Landing />} />} />
+
               {/* Public */}
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
@@ -69,7 +75,7 @@ export default function App() {
                     </NotificationsProvider>
                   }
                 >
-                  <Route index element={<Dashboard />} />
+                  <Route path="dashboard" element={<Dashboard />} />
                   <Route path="discoveries" element={<Discoveries />} />
                   <Route path="recommendations" element={<Recommendations />} />
                   <Route path="watchlist" element={<Watchlist />} />

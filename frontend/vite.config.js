@@ -18,9 +18,13 @@ export default defineConfig({
   },
 
   build: {
-    // Source maps ship to Vercel but aren't referenced by the bundle, so
-    // production stack traces stay readable without exposing source to users.
-    sourcemap: 'hidden',
+    // Source maps are off until an error tracker is wired up. `hidden` maps
+    // are never fetched by a browser, so with nothing consuming them they were
+    // pure weight — ~10MB of .map files on every deploy, and the Tailwind
+    // plugin can't produce one for its CSS transform, which surfaced as a
+    // SOURCEMAP_BROKEN warning on every build. Turn this back on together with
+    // Sentry (or similar), which is what makes them worth shipping.
+    sourcemap: false,
     // Chunking is left to the bundler on purpose.
     //
     // An earlier version forced `three`, `recharts` and `lottie` into named
@@ -30,7 +34,13 @@ export default defineConfig({
     // though the 3D scene is behind React.lazy. Letting rolldown derive
     // chunks from the real dynamic-import boundaries keeps heavy dependencies
     // in the async chunks that actually use them.
-    chunkSizeWarningLimit: 700,
+    // three.js is ~880KB and is the one chunk over the default threshold. It
+    // is not on the critical path: the DNA scene is lazy-loaded and purely
+    // decorative, so it never blocks first paint and never reaches a visitor
+    // who only sees the login or landing page. The limit is raised to sit just
+    // above it so the warning stays meaningful — if a *new* chunk crosses this
+    // line, that's a real regression worth seeing.
+    chunkSizeWarningLimit: 900,
   },
 
   server: {

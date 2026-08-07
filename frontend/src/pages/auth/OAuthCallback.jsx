@@ -19,7 +19,7 @@ export default function OAuthCallback() {
   const { reloadAccount, isAuthenticated, initializing } = useAuth();
   const handled = useRef(false);
 
-  const next = searchParams.get("next") || "/";
+  const next = searchParams.get("next") || "/dashboard";
 
   useEffect(() => {
     if (handled.current) return;

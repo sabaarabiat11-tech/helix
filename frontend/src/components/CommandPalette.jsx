@@ -74,7 +74,7 @@ export default function CommandPalette() {
           {!query.trim() && (
             <Command.Group heading="Quick actions" className="text-[11px] font-medium text-faint uppercase tracking-wide px-2 py-1.5">
               <PaletteItem icon={Play} label="Run Discovery" onSelect={() => { setOpen(false); startRun(); }} />
-              <PaletteItem icon={LayoutDashboard} label="Go to Dashboard" onSelect={() => go("/")} />
+              <PaletteItem icon={LayoutDashboard} label="Go to Dashboard" onSelect={() => go("/dashboard")} />
               <PaletteItem icon={Users} label="Go to New Discoveries" onSelect={() => go("/discoveries")} />
               <PaletteItem icon={Star} label="Go to Watchlist" onSelect={() => go("/watchlist")} />
               <PaletteItem icon={Sparkles} label="Go to Recommendations" onSelect={() => go("/recommendations")} />

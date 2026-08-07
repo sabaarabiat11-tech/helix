@@ -47,7 +47,6 @@ export default function CinematicIntro({ onComplete }) {
   // "network" beat (index 2) without re-rendering React every frame.
   useEffect(() => {
     const start = performance.now();
-    const fromNetwork = beatIndex >= 2 ? 0 : 0;
     const target = beatIndex >= 2 ? 1 : 0;
     const startValue = phaseRef.current;
 

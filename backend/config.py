@@ -107,6 +107,11 @@ class Settings:
     # --- Database -----------------------------------------------------------
     database_url: str = ""
 
+    # Regex matched against the Origin header, in addition to the exact list
+    # above. Exists for Vercel preview deployments, whose hostnames contain a
+    # per-build hash and so cannot be enumerated ahead of time.
+    cors_origin_regex: str = ""
+
     # --- Security -----------------------------------------------------------
     secret_key: str = ""
     access_token_ttl_minutes: int = 30
@@ -253,6 +258,28 @@ def _resolve_secret_key(environment: str) -> str:
     return key
 
 
+def _railway_domain() -> str:
+    """Railway's own public hostname for this service, if we're on Railway.
+
+    Railway injects RAILWAY_PUBLIC_DOMAIN into every deploy. Using it means
+    API_URL is correct automatically — and API_URL is not cosmetic here: the
+    cookie SameSite policy is derived by comparing its host against
+    PUBLIC_URL's, so a wrong value silently breaks sign-in.
+    """
+    return _env("RAILWAY_PUBLIC_DOMAIN") or _env("RAILWAY_STATIC_URL")
+
+
+def _is_platform_hosted() -> bool:
+    """True when a hosting platform's own markers are present.
+
+    Lets the app notice it is deployed even when ENVIRONMENT was never set —
+    the exact state that had this backend running in development mode on a
+    public URL, with an ephemeral SECRET_KEY and a database that vanishes on
+    every redeploy.
+    """
+    return bool(_railway_domain() or _env("RAILWAY_ENVIRONMENT") or _env("RENDER") or _env("FLY_APP_NAME"))
+
+
 def _resolve_cors_origins(public_url: str, is_hosted: bool) -> list[str]:
     """Allowed browser origins.
 
@@ -275,9 +302,19 @@ def _resolve_cors_origins(public_url: str, is_hosted: bool) -> list[str]:
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    environment = _env("ENVIRONMENT", "development")
+    platform_hosted = _is_platform_hosted()
+
+    # A deploy on Railway/Render/Fly is production unless explicitly told
+    # otherwise. Defaulting to "development" there is actively dangerous: it
+    # generates a throwaway SECRET_KEY on every boot (signing all users out on
+    # each redeploy) and leaves the API docs public.
+    environment = _env("ENVIRONMENT") or ("production" if platform_hosted else "development")
+
+    railway_domain = _railway_domain()
+    default_api_url = f"https://{railway_domain}" if railway_domain else "http://localhost:8000"
+
     public_url = _env("PUBLIC_URL", "http://localhost:5173").rstrip("/")
-    api_url = _env("API_URL", "http://localhost:8000").rstrip("/")
+    api_url = _env("API_URL", default_api_url).rstrip("/")
     is_prod = environment.lower() in {"production", "prod"}
     is_hosted = is_prod or environment.lower() == "staging"
 
@@ -299,6 +336,7 @@ def get_settings() -> Settings:
         public_url=public_url,
         api_url=api_url,
         cors_origins=_resolve_cors_origins(public_url, is_hosted),
+        cors_origin_regex=_env("CORS_ORIGIN_REGEX"),
         database_url=_env("DATABASE_URL") or _default_database_url(),
         secret_key=_resolve_secret_key(environment),
         access_token_ttl_minutes=_env_int("ACCESS_TOKEN_TTL_MINUTES", 30),
@@ -335,3 +373,45 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
+
+
+def audit_configuration() -> list[str]:
+    """Problems that would let the app boot but behave wrongly in production.
+
+    These are warnings rather than startup failures on purpose: refusing to
+    start would take a running service down over, say, a missing mail key.
+    They are logged loudly at boot so the cause is visible in the deploy log
+    instead of being discovered later through a support ticket.
+    """
+    problems: list[str] = []
+
+    if not settings.is_production and _is_platform_hosted():
+        problems.append(
+            f"ENVIRONMENT={settings.environment} on a hosted platform. Set ENVIRONMENT=production "
+            "so secure cookies are enabled and the API docs are not public."
+        )
+
+    if settings.is_production:
+        if settings.is_sqlite:
+            problems.append(
+                "DATABASE_URL is unset, so this is running on SQLite inside the container. "
+                "Every redeploy will erase all accounts and watchlists. "
+                "Point it at PostgreSQL: postgresql+psycopg://USER:PASS@HOST:PORT/DB"
+            )
+        if settings.email_provider == "console":
+            problems.append(
+                "EMAIL_PROVIDER=console in production — verification and password-reset emails "
+                "are written to data/outbox/ inside the container and nobody receives them."
+            )
+        if "localhost" in settings.public_url or "127.0.0.1" in settings.public_url:
+            problems.append(
+                f"PUBLIC_URL is {settings.public_url}. It must be the real frontend URL, or the "
+                "browser origin will be blocked by CORS and every email link will point at localhost."
+            )
+        if settings.is_cross_site and settings.cookie_samesite != "none":
+            problems.append(
+                f"Frontend and API are on different hosts but cookie SameSite is "
+                f"'{settings.cookie_samesite}'. Sign-in will appear to work and then 401."
+            )
+
+    return problems

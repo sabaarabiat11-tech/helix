@@ -170,7 +170,7 @@ export const api = {
     }),
   // Absolute on purpose: this is a full-page navigation to the backend, not a
   // fetch, so a relative path would resolve against the frontend host.
-  oauthStartUrl: (provider, next = "/") =>
+  oauthStartUrl: (provider, next = "/dashboard") =>
     `${BASE}/auth/oauth/${provider}/start?next=${encodeURIComponent(next)}`,
 
   // --- Account ---

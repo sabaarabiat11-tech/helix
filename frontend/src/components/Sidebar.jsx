@@ -11,7 +11,7 @@ import { useAuth } from "../hooks/AuthContext";
 const NAV_GROUPS = [
   {
     label: "Overview",
-    items: [{ to: "/", label: "Dashboard", icon: LayoutDashboard, end: true }],
+    items: [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true }],
   },
   {
     label: "Discover",

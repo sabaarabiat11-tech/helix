@@ -163,7 +163,7 @@ def _text_version(headline: str, summary: str, recommendations: list[dict]) -> s
             if person.get("linkedin_url"):
                 lines.append(f"    {person['linkedin_url']}")
         lines.append("")
-    lines.append(f"Open Helix: {sender.app_url('/')}")
+    lines.append(f"Open Helix: {sender.app_url('/dashboard')}")
     lines.append(f"Email preferences: {sender.app_url('/settings')}")
     return "\n".join(lines)
 

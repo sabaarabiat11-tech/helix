@@ -53,7 +53,7 @@ export default function VerifyEmail() {
       subtitle: "Your account is fully activated.",
       body: (
         <Link
-          to="/"
+          to="/dashboard"
           className="inline-flex items-center justify-center w-full rounded-md bg-accent py-2.5 text-[13.5px] font-semibold text-[#04121f] hover:bg-accent-strong transition-colors"
         >
           Go to my dashboard
@@ -66,7 +66,7 @@ export default function VerifyEmail() {
       subtitle: error || "The link may have expired or already been used.",
       body: (
         <Link
-          to="/"
+          to="/dashboard"
           className="inline-flex items-center justify-center w-full rounded-md border border-border bg-surface-2 py-2.5 text-[13.5px] font-semibold text-ink hover:bg-surface-3 transition-colors"
         >
           Continue to Helix
@@ -79,7 +79,7 @@ export default function VerifyEmail() {
       subtitle: "This link is missing its confirmation token.",
       body: (
         <Link
-          to="/"
+          to="/dashboard"
           className="inline-flex items-center justify-center w-full rounded-md border border-border bg-surface-2 py-2.5 text-[13.5px] font-semibold text-ink hover:bg-surface-3 transition-colors"
         >
           Continue to Helix

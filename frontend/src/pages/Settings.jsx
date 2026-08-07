@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   AlertTriangle, Bell, Check, Loader2, Lock, LogOut, Mail, Palette,
-  Send, SlidersHorizontal, Trash2, User,
+  Send, SlidersHorizontal, Sparkles, Trash2, User,
 } from "lucide-react";
 import { api } from "../api/client";
 import { useAuth } from "../hooks/AuthContext";
@@ -110,7 +110,14 @@ export default function Settings() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [verifyState, setVerifyState] = useState("");
+  const [dailyState, setDailyState] = useState("");
   const [deleting, setDeleting] = useState(false);
+
+  // The daily digest and the "Daily AI Recommendation" toggle are the same
+  // underlying preference, surfaced twice: once as the flagship opt-in and
+  // once inside the full cadence picker. Deriving it from preferences rather
+  // than holding separate state keeps the two in sync automatically.
+  const dailyOn = preferences?.digest_frequency === "daily";
 
   useEffect(() => setName(user?.name || ""), [user?.name]);
 
@@ -220,6 +227,54 @@ export default function Settings() {
             </div>
           </motion.div>
         )}
+
+        {/* Daily AI Recommendation — the flagship opt-in, so it leads. */}
+        <Card className={cn("p-6 relative overflow-hidden", dailyOn && "border-accent/35")}>
+          <div className="helix-ambient-bg opacity-60" aria-hidden="true" />
+          <div className="relative flex items-start gap-4 flex-wrap sm:flex-nowrap">
+            <span className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-accent-soft text-accent shrink-0">
+              <Sparkles size={20} />
+            </span>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h2 className="font-display font-semibold text-[15px] text-ink">
+                  Daily AI Recommendation
+                </h2>
+                {dailyOn && <Badge tone="success">On</Badge>}
+              </div>
+              <p className="text-[12.5px] text-dim mt-1.5 leading-relaxed max-w-lg">
+                Every morning, the single strongest new researcher for your interests —
+                with their score, why they surfaced, their company, and a direct profile
+                link. One email, one name, no feed to scroll.
+              </p>
+
+              <div className="flex items-center gap-3 mt-4 flex-wrap">
+                <Button
+                  variant={dailyOn ? "secondary" : "primary"}
+                  size="md"
+                  onClick={() =>
+                    savePreferences({ digest_frequency: dailyOn ? "weekly" : "daily" }, setDailyState)
+                  }
+                  disabled={dailyState === "saving"}
+                >
+                  {dailyState === "saving"
+                    ? "Saving…"
+                    : dailyOn
+                      ? "Switch back to weekly"
+                      : "Turn on daily"}
+                </Button>
+                <SaveStatus state={dailyState} />
+              </div>
+
+              {dailyOn && !user.email_verified && (
+                <p className="text-[11.5px] text-warning mt-3">
+                  Confirm your email address to start receiving it.
+                </p>
+              )}
+            </div>
+          </div>
+        </Card>
 
         {/* Profile */}
         <Section icon={User} title="Profile" description="How you appear inside Helix.">

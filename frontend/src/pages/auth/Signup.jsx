@@ -32,7 +32,7 @@ export default function Signup() {
   }, []);
 
   useEffect(() => {
-    if (!initializing && isAuthenticated) navigate("/", { replace: true });
+    if (!initializing && isAuthenticated) navigate("/dashboard", { replace: true });
   }, [initializing, isAuthenticated, navigate]);
 
   async function handleSubmit(event) {
@@ -50,7 +50,7 @@ export default function Signup() {
 
     try {
       await signup(email, password, name);
-      navigate("/", { replace: true });
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       setError(err.message);
       setSubmitting(false);

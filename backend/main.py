@@ -26,7 +26,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from config import settings
+from config import audit_configuration, settings
 from core import deps
 from core.middleware import RateLimitMiddleware, SecurityHeadersMiddleware
 from database import sync_from_csv
@@ -78,8 +78,14 @@ async def lifespan(_: FastAPI):
     )
     if settings.is_cross_site:
         log.info("Split deployment detected (%s ↔ %s)", settings.public_url, settings.api_url)
+    log.info("CORS allows: %s", ", ".join(settings.cors_origins) or "(nothing)")
     if not settings.is_production and settings.email_provider == "console":
         log.info("Email provider is 'console' — messages are written to data/outbox/")
+
+    # Surface misconfiguration in the deploy log rather than letting it show up
+    # later as "sign-in doesn't work" with no obvious cause.
+    for problem in audit_configuration():
+        log.warning("CONFIG: %s", problem)
 
     yield
 
@@ -108,6 +114,9 @@ app.add_middleware(RateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
+    # Set CORS_ORIGIN_REGEX to also admit Vercel preview builds, whose
+    # hostnames carry a per-build hash and can't be listed in advance.
+    allow_origin_regex=settings.cors_origin_regex or None,
     allow_credentials=True,  # required for the httpOnly refresh cookie
     allow_methods=["*"],
     allow_headers=["*"],
