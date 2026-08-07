@@ -40,9 +40,19 @@ const NAV_GROUPS = [
 
 export default function Sidebar({ open, onNavigate }) {
   return (
+    // `fixed` at every breakpoint, not `fixed lg:static`.
+    //
+    // With `lg:static` the sidebar returned to normal flow on desktop, and
+    // because Layout's wrapper is `display: block` it then occupied a full row
+    // *above* the page content — pushing the whole dashboard down by its own
+    // height (measured: 656px) so nothing was visible until you scrolled past
+    // it. Layout already offsets the content with `lg:pl-64`, which only makes
+    // sense while the sidebar is out of flow, and `inset-y-0` likewise only
+    // applies to a positioned element. Staying fixed is what both of those
+    // were written for, and it keeps the nav pinned while content scrolls.
     <aside
       className={`
-        fixed lg:static inset-y-0 left-0 z-40 w-64 shrink-0
+        fixed inset-y-0 left-0 z-40 w-64
         border-r border-border bg-surface/85 backdrop-blur-xl
         flex flex-col
         transition-transform duration-200
