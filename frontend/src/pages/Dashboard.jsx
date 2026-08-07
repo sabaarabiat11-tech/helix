@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Users, Sparkles, CalendarDays, Clock, Activity, Container, ArrowRight, Star, Dna } from "lucide-react";
 import { api } from "../api/client";
@@ -14,6 +13,7 @@ import Stars from "../components/ui/Stars";
 import { SkeletonCard } from "../components/ui/Skeleton";
 import { formatRelativeTime } from "../lib/format";
 import LazyDnaScene from "../components/cinematic/LazyDnaScene";
+import Reveal from "../components/ui/Reveal";
 
 const PIPELINE_TONE = {
   running: "accent",
@@ -82,7 +82,7 @@ export default function Dashboard() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.15 }}>
+            <Reveal y={10} duration={0.35} delay={0.15}>
               <Card className="p-5 flex items-center justify-between h-full">
                 <div className="flex items-center gap-3">
                   <span className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-surface-2 text-faint">
@@ -97,9 +97,9 @@ export default function Dashboard() {
                   {PIPELINE_LABEL[stats.pipeline_status] || stats.pipeline_status}
                 </Badge>
               </Card>
-            </motion.div>
+            </Reveal>
 
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.2 }}>
+            <Reveal y={10} duration={0.35} delay={0.2}>
               <Card className="p-5 h-full">
                 <div className="flex items-center gap-3 mb-3">
                   <span className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-surface-2 text-faint">
@@ -122,10 +122,10 @@ export default function Dashboard() {
                   </Badge>
                 </div>
               </Card>
-            </motion.div>
+            </Reveal>
           </div>
 
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: 0.25 }} className="mt-4">
+          <Reveal y={10} duration={0.35} delay={0.25} className="mt-4">
             <Card className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2.5">
@@ -163,7 +163,7 @@ export default function Dashboard() {
                 </div>
               )}
             </Card>
-          </motion.div>
+          </Reveal>
         </>
       )}
     </PageShell>

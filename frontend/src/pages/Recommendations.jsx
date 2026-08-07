@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   ArrowRight, Building2, ExternalLink, Flame, SlidersHorizontal, Sparkles, TrendingUp, UserPlus,
@@ -16,6 +15,7 @@ import EmptyState from "../components/ui/EmptyState";
 import { SkeletonCard } from "../components/ui/Skeleton";
 import LazyDnaScene from "../components/cinematic/LazyDnaScene";
 import { cn } from "../lib/cn";
+import Reveal from "../components/ui/Reveal";
 
 const TABS = [
   { id: "top_today", label: "Top today", icon: Sparkles, blurb: "The five strongest matches from the latest discoveries." },
@@ -246,14 +246,12 @@ export default function Recommendations() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {people.map((person, index) => (
-                <motion.div
+                <Reveal
                   key={person.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: Math.min(index, 8) * 0.04 }}
+                  y={10} duration={0.3} delay={Math.min(index, 8) * 0.04}
                 >
                   <PersonCard person={person} rank={index + 1} />
-                </motion.div>
+                </Reveal>
               ))}
             </div>
           )}

@@ -1,11 +1,10 @@
-import { motion } from "framer-motion";
+import Reveal from "./Reveal";
 
 export default function EmptyState({ icon: Icon, title, description, action }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+    <Reveal
+      y={8}
+      duration={0.3}
       className="flex flex-col items-center justify-center text-center py-16 px-6"
     >
       {Icon && (
@@ -16,6 +15,6 @@ export default function EmptyState({ icon: Icon, title, description, action }) {
       <h3 className="font-display font-semibold text-[15px] text-ink mb-1">{title}</h3>
       {description && <p className="text-[13px] text-faint max-w-sm mb-4">{description}</p>}
       {action}
-    </motion.div>
+    </Reveal>
   );
 }

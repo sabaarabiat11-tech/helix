@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { ExternalLink, Clock } from "lucide-react";
 import { api } from "../api/client";
 import { useRun } from "../hooks/RunContext";
@@ -8,6 +7,7 @@ import SourceBadge from "../components/SourceBadge";
 import FollowButton from "../components/FollowButton";
 import EmptyState from "../components/ui/EmptyState";
 import { SkeletonText } from "../components/ui/Skeleton";
+import Reveal from "../components/ui/Reveal";
 
 export default function Timeline() {
   const [buckets, setBuckets] = useState(null);
@@ -47,13 +47,11 @@ export default function Timeline() {
               </div>
               <div className="relative pl-5 border-l border-border flex flex-col gap-3">
                 {bucket.events.map((e, i) => (
-                  <motion.div
+                  <Reveal
                     key={e.id}
-                    initial={{ opacity: 0, x: -6 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.25, delay: Math.min(i * 0.015, 0.3) }}
+                  y={6} duration={0.25} delay={Math.min(i * 0.015, 0.3)}
                     className="relative"
-                  >
+                >
                     <span className="absolute -left-[26px] top-1.5 w-2 h-2 rounded-full bg-accent ring-4 ring-bg" />
                     <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-surface px-4 py-2.5 hover:border-accent/40 transition-colors">
                       <div className="min-w-0">
@@ -69,7 +67,7 @@ export default function Timeline() {
                         </a>
                       </div>
                     </div>
-                  </motion.div>
+                  </Reveal>
                 ))}
               </div>
             </section>

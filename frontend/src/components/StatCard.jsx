@@ -1,14 +1,10 @@
-import { motion } from "framer-motion";
 import Card from "./ui/Card";
+import Reveal from "./ui/Reveal";
 import AnimatedCounter from "./ui/AnimatedCounter";
 
 export default function StatCard({ label, value, sub, icon: Icon, tone = "default", delay = 0 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay }}
-    >
+    <Reveal delay={delay}>
       <Card hover className="p-5 flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <span className="text-[12px] font-medium text-dim uppercase tracking-[0.04em]">{label}</span>
@@ -29,6 +25,6 @@ export default function StatCard({ label, value, sub, icon: Icon, tone = "defaul
         )}
         {sub && <div className="text-[12.5px] text-faint">{sub}</div>}
       </Card>
-    </motion.div>
+    </Reveal>
   );
 }

@@ -5,6 +5,8 @@ import {
   ArrowRight, Bell, Building2, Check, ChevronDown, Dna, ExternalLink,
   Code2, Filter, Mail, Menu, Search, Sparkles, Star, X,
 } from "lucide-react";
+import SharedReveal from "../components/ui/Reveal";
+import { useEntrance } from "../hooks/useEntrance";
 import { cn } from "../lib/cn";
 
 /**
@@ -40,12 +42,15 @@ const SAMPLE = {
 function ScoredCard() {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
-  const [score, setScore] = useState(0);
+  const animate = useEntrance();
+  // Starts at the real value, not 0. The count-up is an embellishment; if
+  // frames never arrive the number must still read correctly rather than
+  // sitting at zero, which would be worse than showing no animation at all.
+  const [score, setScore] = useState(SAMPLE.score);
 
   useEffect(() => {
-    if (!inView) return;
-    // Count up to the score. Uses state rather than a MotionValue because
-    // motion values don't reactively re-render text children.
+    if (!inView || !animate) return undefined;
+
     const duration = 900;
     const start = performance.now();
     let frame;
@@ -55,9 +60,12 @@ function ScoredCard() {
       setScore(Math.round(SAMPLE.score * (1 - Math.pow(1 - t, 3))));
       if (t < 1) frame = requestAnimationFrame(tick);
     };
+    // Only drop to 0 once we know frames are being produced and the count-up
+    // will actually run to completion.
+    setScore(0);
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [inView]);
+  }, [inView, animate]);
 
   return (
     <div ref={ref} className="relative">
@@ -66,8 +74,8 @@ function ScoredCard() {
         className="absolute -inset-6 rounded-3xl bg-[radial-gradient(60%_50%_at_50%_0%,rgba(0,212,255,0.16),transparent_70%)] blur-xl"
       />
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={inView ? { opacity: 1, y: 0 } : {}}
+        initial={animate ? { opacity: 0, y: 16 } : false}
+        animate={inView || !animate ? { opacity: 1, y: 0 } : undefined}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="relative rounded-2xl border border-border bg-surface/90 backdrop-blur-xl p-5 sm:p-6 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.7)]"
       >
@@ -102,8 +110,8 @@ function ScoredCard() {
           {SAMPLE.reasons.map((reason, i) => (
             <motion.li
               key={reason}
-              initial={{ opacity: 0, x: -6 }}
-              animate={inView ? { opacity: 1, x: 0 } : {}}
+              initial={animate ? { opacity: 0, x: -6 } : false}
+              animate={inView || !animate ? { opacity: 1, x: 0 } : undefined}
               transition={{ duration: 0.32, delay: 0.45 + i * 0.13 }}
               className="flex items-start gap-2.5 text-[12.5px] text-dim leading-snug"
             >
@@ -114,8 +122,8 @@ function ScoredCard() {
         </ul>
 
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={inView ? { opacity: 1 } : {}}
+          initial={animate ? { opacity: 0 } : false}
+          animate={inView || !animate ? { opacity: 1 } : undefined}
           transition={{ delay: 1.1 }}
           className="mt-5 flex items-center justify-between gap-3"
         >
@@ -154,19 +162,14 @@ function Section({ id, eyebrow, title, lede, children, className }) {
   );
 }
 
+// Scroll-triggered reveal, delegated to the shared primitive so the landing
+// page inherits the same guarantee as the rest of the app: if frames never
+// arrive, content is shown rather than left at opacity 0.
 function Reveal({ children, delay = 0, className }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-50px" });
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 14 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
-      className={className}
-    >
+    <SharedReveal whenInView y={14} duration={0.45} delay={delay} className={className}>
       {children}
-    </motion.div>
+    </SharedReveal>
   );
 }
 
@@ -359,13 +362,14 @@ function Nav() {
 }
 
 function Hero() {
+  const heroAnimate = useEntrance();
   return (
     <section className="relative overflow-hidden px-5 sm:px-8 pt-16 sm:pt-24 pb-20 sm:pb-28">
       <div className="helix-ambient-bg" aria-hidden="true" />
       <div className="relative max-w-6xl mx-auto grid lg:grid-cols-[1.05fr_0.95fr] gap-14 lg:gap-16 items-center">
         <div>
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={heroAnimate ? { opacity: 0, y: 10 } : false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
             className="inline-flex items-center gap-2 rounded-full border border-border bg-surface-2/60 px-3 py-1.5 text-[11.5px] text-dim mb-7"
@@ -375,7 +379,7 @@ function Hero() {
           </motion.div>
 
           <motion.h1
-            initial={{ opacity: 0, y: 14 }}
+            initial={heroAnimate ? { opacity: 0, y: 14 } : false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.06 }}
             className="font-display font-bold text-[clamp(32px,6vw,54px)] leading-[1.06] tracking-[-0.02em] text-ink text-wrap-balance"
@@ -388,7 +392,7 @@ function Hero() {
           </motion.h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 14 }}
+            initial={heroAnimate ? { opacity: 0, y: 14 } : false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.14 }}
             className="text-[15px] sm:text-[16px] text-dim mt-6 max-w-lg leading-relaxed"
@@ -399,7 +403,7 @@ function Hero() {
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 14 }}
+            initial={heroAnimate ? { opacity: 0, y: 14 } : false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.22 }}
             className="flex flex-col sm:flex-row gap-3 mt-9"
@@ -419,7 +423,7 @@ function Hero() {
           </motion.div>
 
           <motion.p
-            initial={{ opacity: 0 }}
+            initial={heroAnimate ? { opacity: 0 } : false}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.35 }}
             className="text-[12px] text-faint mt-5"

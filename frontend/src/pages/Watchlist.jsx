@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { ExternalLink, Star, Pencil } from "lucide-react";
 import { useWatchlist } from "../hooks/WatchlistContext";
 import PageShell from "../components/PageShell";
@@ -10,6 +9,7 @@ import Input from "../components/ui/Input";
 import EmptyState from "../components/ui/EmptyState";
 import { Dialog, DialogContent } from "../components/ui/Dialog";
 import { formatDate } from "../lib/format";
+import Reveal from "../components/ui/Reveal";
 
 const PRIORITY_TONE = { high: "danger", medium: "warning", low: "neutral" };
 const STATUS_TONE = { new: "accent", contacted: "warning", responded: "success", archived: "neutral" };
@@ -99,12 +99,10 @@ export default function Watchlist() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {entries.map((e, i) => (
-            <motion.div
+            <Reveal
               key={e.watchlist_id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: i * 0.03 }}
-            >
+                  y={10} duration={0.3} delay={i * 0.03}
+                >
               <Card hover className="p-5 flex flex-col gap-3 h-full">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -145,7 +143,7 @@ export default function Watchlist() {
                   </Button>
                 </div>
               </Card>
-            </motion.div>
+            </Reveal>
           ))}
         </div>
       )}

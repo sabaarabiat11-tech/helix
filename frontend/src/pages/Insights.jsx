@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { Sparkles, TrendingUp, Building2, FlaskConical, UserPlus, ArrowUpRight, ArrowDownRight, Minus, BrainCircuit } from "lucide-react";
 import { api } from "../api/client";
 import { useRun } from "../hooks/RunContext";
@@ -10,6 +9,7 @@ import Badge from "../components/ui/Badge";
 import { SkeletonCard } from "../components/ui/Skeleton";
 import { formatDateTime } from "../lib/format";
 import LazyDnaScene from "../components/cinematic/LazyDnaScene";
+import Reveal from "../components/ui/Reveal";
 
 const ICON_BY_CARD = {
   "best-today": Sparkles,
@@ -118,11 +118,9 @@ export default function Insights() {
             {data.cards.map((card, i) => {
               const Icon = ICON_BY_CARD[card.id] || Sparkles;
               return (
-                <motion.div
+                <Reveal
                   key={card.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: i * 0.05 }}
+                  y={10} duration={0.3} delay={i * 0.05}
                 >
                   <Card className="p-5 h-full">
                     <div className="flex items-center gap-2.5 mb-1">
@@ -134,7 +132,7 @@ export default function Insights() {
                     <p className="text-[12px] text-faint">{card.description}</p>
                     <CardBody card={card} />
                   </Card>
-                </motion.div>
+                </Reveal>
               );
             })}
           </div>

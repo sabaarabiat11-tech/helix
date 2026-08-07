@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import Reveal from "../ui/Reveal";
 import { Dna } from "lucide-react";
 import LazyDnaScene from "../cinematic/LazyDnaScene";
 import { cn } from "../../lib/cn";
@@ -30,10 +30,9 @@ export default function AuthLayout({ title, subtitle, children, footer, wide = f
         </Link>
 
         <div className="flex-1 flex items-center">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
+          <Reveal
+            y={12}
+            duration={0.35}
             className={cn("w-full mx-auto", wide ? "max-w-lg" : "max-w-[380px]")}
           >
             <h1 className="font-display font-bold text-[27px] leading-tight text-ink tracking-tight text-wrap-balance">
@@ -41,7 +40,7 @@ export default function AuthLayout({ title, subtitle, children, footer, wide = f
             </h1>
             {subtitle && <p className="text-[13.5px] text-dim mt-2.5 leading-relaxed">{subtitle}</p>}
             <div className="mt-7">{children}</div>
-          </motion.div>
+          </Reveal>
         </div>
 
         {footer && (

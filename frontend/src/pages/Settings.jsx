@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import {
   AlertTriangle, Bell, Check, Loader2, Lock, LogOut, Mail, Palette,
   Send, SlidersHorizontal, Sparkles, Trash2, User,
@@ -13,6 +12,7 @@ import Badge from "../components/ui/Badge";
 import TagInput from "../components/ui/TagInput";
 import { Field, FormError, FormSuccess } from "../components/auth/AuthFormBits";
 import { cn } from "../lib/cn";
+import Reveal from "../components/ui/Reveal";
 
 const SENIORITY_OPTIONS = [
   { value: "any", label: "Any" },
@@ -212,7 +212,7 @@ export default function Settings() {
       <div className="flex flex-col gap-4 max-w-3xl">
 
         {!user.email_verified && (
-          <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}>
+          <Reveal y={-6} duration={0.3}>
             <div className="flex flex-wrap items-center gap-3 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3">
               <AlertTriangle size={16} className="text-warning shrink-0" />
               <p className="text-[12.5px] text-warning flex-1 min-w-[200px]">
@@ -225,7 +225,7 @@ export default function Settings() {
                 <span className="text-[11.5px] text-success">{verifyState}</span>
               )}
             </div>
-          </motion.div>
+          </Reveal>
         )}
 
         {/* Daily AI Recommendation — the flagship opt-in, so it leads. */}

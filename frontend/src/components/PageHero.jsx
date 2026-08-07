@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import Reveal from "./ui/Reveal";
 import { cn } from "../lib/cn";
 
 /** Signature hero banner — glass panel + ambient ammated glow, optionally
@@ -7,10 +7,9 @@ import { cn } from "../lib/cn";
  * inherit the same tokens/glass treatment via Card. */
 export default function PageHero({ eyebrow, title, subtitle, icon: Icon, scene, right, className }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
+    <Reveal
+      y={-8}
+      duration={0.4}
       className={cn("relative overflow-hidden rounded-lg glass-panel mb-6", className)}
     >
       <div className="helix-ambient-bg" />
@@ -38,6 +37,6 @@ export default function PageHero({ eyebrow, title, subtitle, icon: Icon, scene, 
         </div>
         {right}
       </div>
-    </motion.div>
+    </Reveal>
   );
 }
