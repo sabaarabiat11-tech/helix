@@ -156,14 +156,14 @@ The digest worker is a scheduled command, not a server. On Railway:
 ```
 New → Cron Job
 Schedule:  0 8 * * *        (daily 08:00 UTC)
-Command:   python backend/workers/digest_worker.py --frequency daily
+Command:   python workers/digest_worker.py --frequency daily
 ```
 
 and a second one:
 
 ```
 Schedule:  0 8 * * 1        (Mondays 08:00 UTC)
-Command:   python backend/workers/digest_worker.py --frequency weekly
+Command:   python workers/digest_worker.py --frequency weekly
 ```
 
 Check what would be sent, without sending it:

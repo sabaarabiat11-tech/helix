@@ -43,13 +43,22 @@ EXPOSE 8000
 
 # Liveness, not readiness — see the endpoint docstrings in backend/main.py for
 # why a health check must not touch the database.
+#
+# The port is read from the environment rather than hardcoded: Railway assigns
+# a random $PORT, so a probe pinned to 8000 would check a port nothing is
+# listening on and report every healthy container as unhealthy.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health').status==200 else 1)"
+    CMD python -c "import os,urllib.request,sys; \
+sys.exit(0 if urllib.request.urlopen(f\"http://127.0.0.1:{os.getenv('PORT','8000')}/api/health\").status==200 else 1)"
 
 WORKDIR /app/backend
 
-# Railway injects $PORT and expects the process to bind it. Shell form so the
-# variable is expanded, with a default for plain `docker run`.
-# --proxy-headers makes X-Forwarded-For/Proto trustworthy behind Railway's
-# edge, which the rate limiter and secure-cookie logic both depend on.
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips='*'
+# Exec form, and the port is resolved inside Python by serve.py.
+#
+# The obvious `CMD uvicorn main:app --port ${PORT:-8000}` works here but is a
+# trap: any platform that overrides the image's CMD with its own start command
+# (Railway's `deploy.startCommand`, Fly's `[processes]`) re-introduces the
+# literal-`$PORT` bug, because those are frequently run without a shell.
+# Keeping the port logic in Python means the entrypoint behaves identically
+# whether or not a shell is in the picture.
+CMD ["python", "serve.py"]
