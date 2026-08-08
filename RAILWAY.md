@@ -107,6 +107,44 @@ Split deployment detected (https://helix-ai-app.vercel.app ↔ https://<api>.up.
 | `db=sqlite` in production | `DATABASE_URL` not set — data will vanish on redeploy |
 | Healthcheck timeout, no errors | `PORT` manually set, or the app bound the wrong interface |
 | `cookies=SameSite:lax` in a split deploy | `PUBLIC_URL`/`API_URL` are on the same host or unset |
+| "Run Discovery" returns 503 immediately | Correct — `SEARXNG_BASE_URL` is unset. See below |
+| Discovery "completes" but Total People stays 0 | `SEARXNG_BASE_URL` points at something unreachable. Check `GET /api/admin/status` |
+
+## Discovery runs and SearXNG
+
+`POST /api/run` behaves differently depending on `settings.is_hosted`
+(production or staging):
+
+- **Hosted** (this deployment): invokes `run.py` directly. If
+  `SEARXNG_BASE_URL` is unset, the endpoint returns **503 before starting
+  anything** — deliberately, rather than running for ~15s and reporting zero
+  results for a reason nobody could see.
+- **Local dev**: invokes `start.py`, which brings up the docker-compose
+  SearXNG container and waits for it, exactly as before. Unchanged.
+
+This distinction exists because `start.py` is a local-only convenience — it
+runs `docker compose up -d` and polls `localhost:8080`, neither of which can
+ever work inside a Railway container (no Docker socket, nothing listening on
+its own loopback). Running it there was the original cause of "Run Finished"
+with zero results: `start.py` failed at step one, so the actual pipeline
+never ran at all.
+
+**Getting SearXNG reachable from Railway** is the one piece of this that needs
+your action — see `DEPLOYMENT.md` §4. In short: a self-hosted SearXNG (a
+second Railway service from `docker.io/searxng/searxng:latest`, or a small
+VPS) reachable from this service, with `SEARXNG_BASE_URL` pointed at it.
+**Never set it to `localhost` here** — the audit at `GET /api/admin/status`
+flags that explicitly, since it means the search backend was configured but
+misconfigured, not simply left unset.
+
+Once configured, a completed run reports one of:
+
+| `pipeline_status` | Meaning |
+| ------------------ | ------- |
+| `completed` | Found and saved new people |
+| `completed_zero_results` | Ran fine, SearXNG reachable, nobody new found |
+| `completed_zero_results_searxng_unavailable` | SearXNG was unreachable this run — the infrastructure problem, distinct from a boring empty run |
+| `failed` | The pipeline process crashed |
 
 ## Digest cron jobs
 

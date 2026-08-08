@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -10,37 +9,39 @@ from database import sync_from_csv
 from db import db_conn, scalar
 from routers.status import _check_docker, _check_searxng
 from run_state import run_state
+from services.pipeline_log import STATUS_NEVER_RUN, parse_run_log
 
 router = APIRouter(prefix="/api/stats", tags=["stats"])
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 LOGS_DIR = PROJECT_ROOT / "data" / "logs"
 
-RUN_COMPLETE_RE = re.compile(r"Run complete: (\d+) new people added")
-
 
 def _latest_log_info() -> dict:
     if not LOGS_DIR.exists():
-        return {"last_run_time": None, "last_run_new_people": None, "last_run_status": "never_run"}
+        return {
+            "last_run_time": None, "last_run_new_people": None,
+            "last_run_status": STATUS_NEVER_RUN, "last_run_searxng_reachable": None,
+        }
 
     log_files = sorted(LOGS_DIR.glob("run_*.log"), key=lambda p: p.stat().st_mtime, reverse=True)
     if not log_files:
-        return {"last_run_time": None, "last_run_new_people": None, "last_run_status": "never_run"}
+        return {
+            "last_run_time": None, "last_run_new_people": None,
+            "last_run_status": STATUS_NEVER_RUN, "last_run_searxng_reachable": None,
+        }
 
     latest = log_files[0]
     mtime = datetime.fromtimestamp(latest.stat().st_mtime).isoformat()
-
     text = latest.read_text(encoding="utf-8", errors="replace")
-    match = RUN_COMPLETE_RE.search(text)
-    if match:
-        return {
-            "last_run_time": mtime,
-            "last_run_new_people": int(match.group(1)),
-            "last_run_status": "completed",
-        }
-    if "Traceback" in text or "Run failed" in text:
-        return {"last_run_time": mtime, "last_run_new_people": None, "last_run_status": "failed"}
-    return {"last_run_time": mtime, "last_run_new_people": None, "last_run_status": "incomplete"}
+    outcome = parse_run_log(text)
+
+    return {
+        "last_run_time": mtime,
+        "last_run_new_people": outcome.new_people,
+        "last_run_status": outcome.status,
+        "last_run_searxng_reachable": outcome.searxng_reachable,
+    }
 
 
 @router.get("")

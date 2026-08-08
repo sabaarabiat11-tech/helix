@@ -5,15 +5,34 @@ import subprocess
 import requests
 from fastapi import APIRouter
 
-router = APIRouter(prefix="/api/status", tags=["status"])
+from config import settings
 
-SEARXNG_URL = "http://localhost:8080"
+router = APIRouter(prefix="/api/status", tags=["status"])
 
 
 def _check_searxng() -> dict:
-    result = {"reachable": False, "healthy": False, "json_api_working": False}
+    """Reachability of whatever SearXNG endpoint this deployment is actually
+    configured to use — never a hardcoded address.
+
+    Previously this always probed `http://localhost:8080`, regardless of
+    `SEARXNG_BASE_URL`. On Railway that meant the dashboard reported
+    "unreachable" no matter what the operator configured, because nothing was
+    ever listening on the container's own loopback interface — it was
+    checking the wrong host, not reporting a real outage.
+    """
+    base_url = settings.searxng_base_url
+    result = {
+        "configured": bool(base_url),
+        "base_url": base_url or None,
+        "reachable": False,
+        "healthy": False,
+        "json_api_working": False,
+    }
+    if not base_url:
+        return result
+
     try:
-        health = requests.get(f"{SEARXNG_URL}/healthz", timeout=3)
+        health = requests.get(f"{base_url}/healthz", timeout=3)
         result["reachable"] = True
         result["healthy"] = health.status_code == 200
     except requests.RequestException:
@@ -21,7 +40,7 @@ def _check_searxng() -> dict:
 
     try:
         search = requests.get(
-            f"{SEARXNG_URL}/search",
+            f"{base_url}/search",
             params={"q": "healthcheck", "format": "json"},
             timeout=5,
         )
@@ -35,6 +54,15 @@ def _check_searxng() -> dict:
 
 
 def _check_docker() -> dict:
+    """Best-effort local-dev diagnostic only.
+
+    A hosted deployment (Railway, Render, ...) has no Docker daemon inside its
+    own container by design, so `container_found: false` there is the
+    *correct* and expected answer, not a fault — `_check_searxng` above, keyed
+    off the real configured URL, is the signal that actually matters in
+    production. This stays around only because it's still useful when running
+    the app locally against the docker-compose SearXNG.
+    """
     result = {"docker_cli_available": False, "container_found": False, "container_status": None}
     try:
         proc = subprocess.run(

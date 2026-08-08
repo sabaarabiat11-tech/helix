@@ -5,6 +5,10 @@ export function useRunPipeline(onComplete) {
   const [running, setRunning] = useState(false);
   const [logLines, setLogLines] = useState([]);
   const [error, setError] = useState("");
+  // What actually happened on the last run — status/new_people/searxng_reachable
+  // from backend/services/pipeline_log.py, via the WebSocket "closed" event.
+  // null until a run has finished at least once this session.
+  const [outcome, setOutcome] = useState(null);
   const socketRef = useRef(null);
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
@@ -27,6 +31,12 @@ export function useRunPipeline(onComplete) {
       }
       if (payload && payload.event === "closed") {
         setRunning(false);
+        // Everything except `event`/`exit_code` is the outcome payload —
+        // status, new_people, searxng_reachable — passed straight through
+        // rather than re-listing each field, so a new field on the backend
+        // reaches the UI without a matching edit here.
+        const { event: _event, exit_code, ...rest } = payload;
+        setOutcome({ exitCode: exit_code, ...rest });
         ws.close();
         onCompleteRef.current?.();
         return;
@@ -56,7 +66,9 @@ export function useRunPipeline(onComplete) {
   }, []);
 
   // On mount, check whether a run is already in progress (e.g. page was
-  // refreshed mid-run) and reattach the live log stream if so.
+  // refreshed mid-run) and reattach the live log stream if so — and either
+  // way, pick up the outcome of whatever the last run actually did, so a
+  // freshly loaded page can show it without requiring a new run.
   useEffect(() => {
     api
       .runState()
@@ -64,6 +76,8 @@ export function useRunPipeline(onComplete) {
         if (state.running) {
           setRunning(true);
           attachSocket();
+        } else if (state.status) {
+          setOutcome({ exitCode: state.exit_code, status: state.status, new_people: state.new_people, searxng_reachable: state.searxng_reachable });
         }
       })
       .catch(() => {});
@@ -73,6 +87,7 @@ export function useRunPipeline(onComplete) {
   const start = useCallback(async () => {
     setError("");
     setLogLines([]);
+    setOutcome(null);
     try {
       await api.triggerRun();
       setRunning(true);
@@ -82,5 +97,5 @@ export function useRunPipeline(onComplete) {
     }
   }, [attachSocket]);
 
-  return { running, logLines, error, start };
+  return { running, logLines, error, outcome, start };
 }

@@ -154,6 +154,14 @@ class Settings:
     scheduler_hour: int = 8          # UTC hour for the daily send
     scheduler_weekday: int = 0       # 0 = Monday, for the weekly send
 
+    # --- Discovery pipeline ---------------------------------------------------
+    # The single source of truth for "where is SearXNG", shared with the
+    # pipeline (src/config.py reads the same SEARXNG_BASE_URL env var). Empty
+    # by default rather than defaulting to localhost: a hosted deployment with
+    # nothing configured should say so plainly rather than silently probing a
+    # loopback address nothing is listening on.
+    searxng_base_url: str = ""
+
     # --- OAuth --------------------------------------------------------------
     google_client_id: str = ""
     google_client_secret: str = ""
@@ -169,6 +177,17 @@ class Settings:
     @property
     def is_staging(self) -> bool:
         return self.environment.lower() == "staging"
+
+    @property
+    def is_hosted(self) -> bool:
+        """Production or staging — a real deployment, not a laptop.
+
+        Used where behavior needs to differ from local development for a
+        reason that has nothing to do with security or cookies (the other
+        `is_*` flags), such as: don't try to manage a local Docker daemon that
+        doesn't exist here.
+        """
+        return self.is_production or self.is_staging
 
     @property
     def is_sqlite(self) -> bool:
@@ -374,6 +393,11 @@ def get_settings() -> Settings:
         enable_scheduler=_env_bool("ENABLE_SCHEDULER", True),
         scheduler_hour=max(0, min(23, _env_int("SCHEDULER_HOUR", 8))),
         scheduler_weekday=max(0, min(6, _env_int("SCHEDULER_WEEKDAY", 0))),
+        # Outside production, default to the same localhost:8080 the pipeline's
+        # own config.yaml defaults to, so local dev needs no extra setup. In a
+        # hosted environment an unset value stays empty — defaulting a Railway
+        # deploy to "localhost" would make it silently probe itself forever.
+        searxng_base_url=_env("SEARXNG_BASE_URL", "" if is_hosted else "http://localhost:8080").rstrip("/"),
         google_client_id=_env("GOOGLE_CLIENT_ID"),
         google_client_secret=_env("GOOGLE_CLIENT_SECRET"),
         github_client_id=_env("GITHUB_CLIENT_ID"),
@@ -423,6 +447,16 @@ def audit_configuration() -> list[str]:
             problems.append(
                 f"Frontend and API are on different hosts but cookie SameSite is "
                 f"'{settings.cookie_samesite}'. Sign-in will appear to work and then 401."
+            )
+        if not settings.searxng_base_url:
+            problems.append(
+                "SEARXNG_BASE_URL is unset. Discovery runs will refuse to start (503) until a "
+                "reachable SearXNG instance is configured — see DEPLOYMENT.md §4."
+            )
+        elif "localhost" in settings.searxng_base_url or "127.0.0.1" in settings.searxng_base_url:
+            problems.append(
+                f"SEARXNG_BASE_URL is {settings.searxng_base_url}, which is not reachable from "
+                "inside a hosted container. Point it at a real SearXNG service instead."
             )
 
     return problems

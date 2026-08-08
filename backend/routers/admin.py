@@ -12,6 +12,8 @@ from config import audit_configuration, settings
 from core import deps
 from database import MASTER_CSV, sync_from_csv
 from db import db_conn, engine, scalar
+from routers.status import _check_searxng
+from run_state import run_state
 from services import scheduler_service, user_service
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -53,7 +55,12 @@ def admin_status(_: dict = Depends(deps.admin_user)):
         "pipeline": {
             "master_csv_present": MASTER_CSV.exists(),
             "users": user_service.count_users(),
+            "last_run_status": run_state.status_payload()["status"],
+            "last_run_new_people": run_state.status_payload()["new_people"],
         },
+        # What "Run Discovery" will actually try to reach right now — the
+        # single most direct answer to "why is Total People stuck at 0".
+        "searxng": _check_searxng(),
         # Empty means nothing is misconfigured.
         "warnings": audit_configuration(),
     }

@@ -13,7 +13,7 @@ export function RunProvider({ children }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const bumpRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
-  const { running, logLines, error, start } = useRunPipeline(bumpRefresh);
+  const { running, logLines, error, outcome, start } = useRunPipeline(bumpRefresh);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const startRun = useCallback(() => {
@@ -71,7 +71,7 @@ export function RunProvider({ children }) {
 
   return (
     <RunContext.Provider
-      value={{ running, logLines, error, startRun, drawerOpen, setDrawerOpen, refreshKey }}
+      value={{ running, logLines, error, outcome, startRun, drawerOpen, setDrawerOpen, refreshKey }}
     >
       {children}
     </RunContext.Provider>

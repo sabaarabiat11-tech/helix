@@ -87,7 +87,7 @@ Do **not** set `PORT`; Railway injects it.
 | `ALLOW_USER_TRIGGERED_RUNS`   | `false` in production | Admins can still trigger runs |
 | `GOOGLE_CLIENT_ID` / `_SECRET`| —       | Callback: `<API_URL>/api/auth/oauth/google/callback` |
 | `GITHUB_CLIENT_ID` / `_SECRET`| —       | Callback: `<API_URL>/api/auth/oauth/github/callback` |
-| `SEARXNG_BASE_URL`            | `http://localhost:8080` | See step 4 |
+| `SEARXNG_BASE_URL`            | *(empty)* in production | **Not optional in practice** — see step 4. Without it, "Run Discovery" refuses to start (503) rather than running and reporting zero results for an undiscoverable reason. Never set this to `localhost` on Railway; nothing listens there. |
 
 ## 3. The frontend on Vercel
 

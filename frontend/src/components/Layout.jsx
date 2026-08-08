@@ -17,7 +17,7 @@ function shouldPlayIntro() {
 
 export default function Layout() {
   const [navOpen, setNavOpen] = useState(false);
-  const { running, logLines, drawerOpen, setDrawerOpen } = useRun();
+  const { running, logLines, outcome, drawerOpen, setDrawerOpen } = useRun();
   const [showIntro, setShowIntro] = useState(shouldPlayIntro);
 
   useEffect(() => {
@@ -48,6 +48,7 @@ export default function Layout() {
         onClose={() => setDrawerOpen(false)}
         running={running}
         lines={logLines}
+        outcome={outcome}
       />
 
       <CommandPalette />

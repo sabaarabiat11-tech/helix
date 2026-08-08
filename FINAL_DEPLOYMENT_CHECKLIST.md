@@ -105,9 +105,13 @@ one at `/app/data`, then copy `data/linkedin_master.csv` into it. It imports on
 the next boot, and again after every pipeline run.
 
 **B. Run the pipeline against production** — the corpus fills itself on the
-first scheduled run. Needs SearXNG reachable from Railway
-(`SEARXNG_BASE_URL`); see [DEPLOYMENT.md](DEPLOYMENT.md) §4 for why a small VPS
-beats hosting it on Railway.
+first scheduled run. **Needs `SEARXNG_BASE_URL` pointed at a reachable SearXNG
+instance first** — without it, "Run Discovery" now correctly refuses to start
+(503) rather than running and reporting zero results for an invisible reason.
+See [DEPLOYMENT.md](DEPLOYMENT.md) §4 for why a small VPS beats hosting SearXNG
+on Railway, and [RAILWAY.md](RAILWAY.md) for how a run's outcome is reported.
+Check `GET /api/admin/status` → `searxng` at any time to see exactly what's
+configured and whether it's reachable right now.
 
 **C. Leave it empty** — everything works, there is simply nothing to rank yet.
 

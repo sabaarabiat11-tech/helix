@@ -18,6 +18,8 @@ import Reveal from "../components/ui/Reveal";
 const PIPELINE_TONE = {
   running: "accent",
   completed: "success",
+  completed_zero_results: "warning",
+  completed_zero_results_searxng_unavailable: "danger",
   failed: "danger",
   incomplete: "warning",
   never_run: "neutral",
@@ -26,6 +28,8 @@ const PIPELINE_TONE = {
 const PIPELINE_LABEL = {
   running: "Running",
   completed: "Completed",
+  completed_zero_results: "Finished — no new people",
+  completed_zero_results_searxng_unavailable: "Failed — SearXNG unavailable",
   failed: "Failed",
   incomplete: "Incomplete",
   never_run: "Never run",
@@ -106,19 +110,36 @@ export default function Dashboard() {
                     <Container size={17} />
                   </span>
                   <div>
-                    <div className="text-[13px] font-semibold text-ink">Docker / SearXNG</div>
-                    <div className="text-[12px] text-faint">Local search backend health</div>
+                    <div className="text-[13px] font-semibold text-ink">Discovery search backend</div>
+                    <div className="text-[12px] text-faint">
+                      {stats.searxng.base_url || "SearXNG"}
+                    </div>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge tone={stats.docker.container_found && stats.docker.container_status === "running" ? "success" : "danger"}>
-                    Container: {stats.docker.container_found ? (stats.docker.container_status || "unknown") : "not found"}
-                  </Badge>
-                  <Badge tone={stats.docker.container_health === "healthy" ? "success" : "warning"}>
-                    Health: {stats.docker.container_health || "n/a"}
-                  </Badge>
-                  <Badge tone={stats.searxng.json_api_working ? "success" : "danger"}>
-                    JSON API: {stats.searxng.json_api_working ? "working" : "unreachable"}
+                  {/* The Docker container check only means anything where Docker
+                      is actually expected (local dev). A hosted deployment has
+                      no Docker daemon of its own by design — showing "not
+                      found" there every time reads as a fault when it isn't
+                      one, so it's shown only where the docker CLI exists at all. */}
+                  {stats.docker.docker_cli_available && (
+                    <Badge tone={stats.docker.container_found && stats.docker.container_status === "running" ? "success" : "warning"}>
+                      Container: {stats.docker.container_found ? (stats.docker.container_status || "unknown") : "not found"}
+                    </Badge>
+                  )}
+                  <Badge
+                    tone={
+                      !stats.searxng.configured ? "warning"
+                      : stats.searxng.json_api_working ? "success"
+                      : "danger"
+                    }
+                  >
+                    SearXNG:{" "}
+                    {!stats.searxng.configured
+                      ? "not configured"
+                      : stats.searxng.json_api_working
+                        ? "working"
+                        : "unreachable"}
                   </Badge>
                 </div>
               </Card>
